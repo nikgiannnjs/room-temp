@@ -3,15 +3,7 @@ import psycopg2 #postgresql library
 from dotenv import load_dotenv #environment variables loader
 from flask import Flask, request
 from datetime import datetime
-
-#SQL Queries
-
-CREATE_ROOMS_TABLE = "CREATE TABLE IF NOT EXISTS rooms (id SERIAL PRIMARY KEY , name VARCHAR(250));"
-CREATE_TEMPS_TABLE = "CREATE TABLE IF NOT EXISTS temperatures (room_id INTEGER , temperature REAL, date TIMESTAMP , FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE CASCADE);"
-INSERT_ROOM_RETURN_ID = "INSERT INTO rooms (name) VALUES (%s) RETURNING id;"
-INSERT_TEMP = "INSERT INTO temperatures (room_id , temperature , date) VALUES (%s , %s , %s);"
-GLOBAL_NUMBER_OF_DAYS = "SELECT COUNT (DISTINCT DATE(date) AS days FROM temperatures);"
-GLOBAL_AVG = "SELECT AVG(temperature) as average FROM temperatures;"
+from queries import CREATE_ROOMS_TABLE, CREATE_TEMPS_TABLE, INSERT_ROOM_RETURN_ID, INSERT_TEMP, GLOBAL_AVG, GLOBAL_NUMBER_OF_DAYS
 
 
 load_dotenv()
@@ -48,8 +40,9 @@ def create_room():
                 cursor.execute(INSERT_ROOM_RETURN_ID , (name,))
                 room_id = cursor.fetchone()[0] #brings back the first row the cursor has fetched. In this case, is the only one.
                 return {"id": room_id , "message": f"Room {name} has been created"}, 201
-    except:
-        print("Error at /api/room endpoint")
+    except Exception as e:
+        print(f"Error at /api/room endpoint: {e}")
+        return {"message": "Something went wrong while trying to add room."}, 500
         
 @app.post("/api/temperature")
 def add_temp():
@@ -62,6 +55,9 @@ def add_temp():
             with connection.cursor() as cursor:
                 cursor.execute(CREATE_TEMPS_TABLE)
                 cursor.execute(INSERT_TEMP , (room_id , temperature , date))
-                return {"message": "Temperature has been added successfully."}
-    except:
-        print("Error at /api/temperature endpoint")
+                cursor.execute("SELECT name FROM rooms WHERE id = %s;" , (room_id,))
+                room = cursor.fetchone()[0]
+                return {"message": f"{room} temperature has been added successfully."}, 201
+    except Exception as e:
+        print(f"Error at /api/temperature endpoint: {e}")
+        return {"message": "Something went wrong while trying to add temperature."}, 500
