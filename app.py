@@ -2,6 +2,7 @@ import os #.env reader
 import psycopg2 #postgresql library
 from dotenv import load_dotenv #environment variables loader
 from flask import Flask, request
+from datetime import datetime
 
 #SQL Queries
 
@@ -40,10 +41,27 @@ except psycopg2.Error as e:
 def create_room():
     data = request.get_json()
     name = data["name"]
-    with connection:
-        with connection.cursor() as cursor:
-            cursor.execute(CREATE_ROOMS_TABLE)
-            cursor.execute(INSERT_ROOM_RETURN_ID , (name,))
-            room_id = cursor.fetchone()[0] #brings back the first row the cursor has fetched. In this case, is the only one.
-            return {"id": room_id , "message": f"Room {name} has been created"}, 201
+    try:
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute(CREATE_ROOMS_TABLE)
+                cursor.execute(INSERT_ROOM_RETURN_ID , (name,))
+                room_id = cursor.fetchone()[0] #brings back the first row the cursor has fetched. In this case, is the only one.
+                return {"id": room_id , "message": f"Room {name} has been created"}, 201
+    except:
+        print("Error at /api/room endpoint")
         
+@app.post("/api/temperature")
+def add_temp():
+    data = request.get_json()
+    temperature = data["temperature"]
+    room_id = data["room_id"]
+    date = datetime.now()
+    try:
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute(CREATE_TEMPS_TABLE)
+                cursor.execute(INSERT_TEMP , (room_id , temperature , date))
+                return {"message": "Temperature has been added successfully."}
+    except:
+        print("Error at /api/temperature endpoint")
