@@ -1,6 +1,7 @@
 from flask import Flask
 from dotenv import load_dotenv
 from app.db import connection 
+from app.api.routes import temp_bp
 
 load_dotenv()  # Load environment variables from .env
 
