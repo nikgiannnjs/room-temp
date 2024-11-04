@@ -3,9 +3,9 @@ from app.db import connection
 from datetime import datetime
 from app.db.queries import CREATE_ROOMS_TABLE, CREATE_TEMPS_TABLE, INSERT_ROOM_RETURN_ID, INSERT_TEMP
 
-api_bp = Blueprint('api', __name__)
+temp_bp = Blueprint('room_temp', __name__)
 
-@api_bp.route('/room', methods=['POST'])
+@temp_bp.route('/room', methods=['POST'])
 def create_room():
     data = request.get_json()
     name = data["name"]
@@ -21,7 +21,7 @@ def create_room():
         return {"message": "Failed to create room"}, 500
 
 
-@api_bp.route('/temperature', methods=['POST'])
+@temp_bp.route('/temperature', methods=['POST'])
 def add_temp():
     data = request.get_json()
     temperature = data["temperature"]
